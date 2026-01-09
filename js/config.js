@@ -4,22 +4,34 @@
  */
 
 // 디바이스 화면 프리셋 (미리보기용)
+// Source: yesviz.com (Recent 3 Years Models)
 const DEVICE_PRESETS = {
-    // iPhone 시리즈
-    'iphone-se': { name: 'iPhone SE', width: 375, height: 667, scale: 2, type: 'iphone' },
-    'iphone-8': { name: 'iPhone 8', width: 375, height: 667, scale: 2, type: 'iphone' },
-    'iphone-12-mini': { name: 'iPhone 12/13 mini', width: 375, height: 812, scale: 3, type: 'iphone' },
+    // --- Apple iPhone ---
+    'iphone-se-3': { name: 'iPhone SE (3rd Gen)', width: 375, height: 667, scale: 2, type: 'iphone' },
+    'iphone-12-mini': { name: 'iPhone 12/13 Mini', width: 375, height: 812, scale: 3, type: 'iphone' },
     'iphone-12': { name: 'iPhone 12/13/14', width: 390, height: 844, scale: 3, type: 'iphone' },
-    'iphone-14-pro': { name: 'iPhone 14 Pro', width: 393, height: 852, scale: 3, type: 'iphone' },
-    'iphone-14-pro-max': { name: 'iPhone 14 Pro Max', width: 430, height: 932, scale: 3, type: 'iphone' },
-    'iphone-15': { name: 'iPhone 15', width: 393, height: 852, scale: 3, type: 'iphone' },
-    'iphone-15-pro-max': { name: 'iPhone 15 Pro Max', width: 430, height: 932, scale: 3, type: 'iphone' },
+    'iphone-12-pro-max': { name: 'iPhone 12/13 Pro Max', width: 428, height: 926, scale: 3, type: 'iphone' },
+    'iphone-14-plus': { name: 'iPhone 14 Plus', width: 428, height: 926, scale: 3, type: 'iphone' },
+    'iphone-14-pro': { name: 'iPhone 14/15/16 Pro', width: 393, height: 852, scale: 3, type: 'iphone' },
+    'iphone-14-pro-max': { name: 'iPhone 14/15/16 Pro Max', width: 430, height: 932, scale: 3, type: 'iphone' },
     
-    // Android 시리즈
+    // --- Samsung Galaxy ---
+    'galaxy-s22': { name: 'Galaxy S22', width: 360, height: 780, scale: 3, type: 'android' },
+    'galaxy-s22-plus': { name: 'Galaxy S22+', width: 360, height: 780, scale: 3, type: 'android' },
+    'galaxy-s22-ultra': { name: 'Galaxy S22 Ultra', width: 384, height: 824, scale: 3, type: 'android' },
     'galaxy-s23': { name: 'Galaxy S23', width: 360, height: 780, scale: 3, type: 'android' },
+    'galaxy-s23-plus': { name: 'Galaxy S23+', width: 360, height: 780, scale: 3, type: 'android' },
+    'galaxy-s23-ultra': { name: 'Galaxy S23 Ultra', width: 384, height: 824, scale: 3, type: 'android' },
     'galaxy-s24': { name: 'Galaxy S24', width: 360, height: 780, scale: 3, type: 'android' },
-    'galaxy-s24-ultra': { name: 'Galaxy S24 Ultra', width: 384, height: 824, scale: 3.75, type: 'android' },
-    'pixel-7': { name: 'Pixel 7', width: 412, height: 892, scale: 2.625, type: 'android' },
+    'galaxy-s24-plus': { name: 'Galaxy S24+', width: 360, height: 780, scale: 3, type: 'android' },
+    'galaxy-s24-ultra': { name: 'Galaxy S24 Ultra', width: 384, height: 824, scale: 3, type: 'android' },
+    
+    // --- Google Pixel ---
+    'pixel-6': { name: 'Pixel 6', width: 412, height: 915, scale: 2.6, type: 'android' },
+    'pixel-6-pro': { name: 'Pixel 6 Pro', width: 412, height: 892, scale: 3.5, type: 'android' },
+    'pixel-7': { name: 'Pixel 7', width: 412, height: 915, scale: 2.6, type: 'android' },
+    'pixel-7-pro': { name: 'Pixel 7 Pro', width: 412, height: 892, scale: 3.5, type: 'android' },
+    'pixel-8': { name: 'Pixel 8', width: 412, height: 915, scale: 3, type: 'android' },
     'pixel-8-pro': { name: 'Pixel 8 Pro', width: 412, height: 892, scale: 3.5, type: 'android' },
 };
 

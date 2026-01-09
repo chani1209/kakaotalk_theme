@@ -10,7 +10,6 @@ Thumbs.db
 pdf_content.txt
 pdf_images/
 extract_pdf.py
-*.pdf
 
 # Reference/Sample Files (Clean repo)
 apeach-25.8.0/

@@ -4,6 +4,43 @@
  */
 
 /**
+ * 디바이스 선택 옵션 생성
+ */
+function populateDeviceSelector() {
+    const selector = document.getElementById('deviceSelector');
+    if (!selector) return;
+    
+    const selectedValue = selector.value || currentDevice;
+    selector.innerHTML = '';
+    
+    const groups = {
+        'iphone': document.createElement('optgroup'),
+        'android': document.createElement('optgroup')
+    };
+    groups['iphone'].label = 'Apple iPhone';
+    groups['android'].label = 'Android';
+    
+    for (const [key, device] of Object.entries(DEVICE_PRESETS)) {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = `${device.name} (${device.width}×${device.height})`;
+        
+        if (key === selectedValue) {
+            option.selected = true;
+        }
+        
+        if (groups[device.type]) {
+            groups[device.type].appendChild(option);
+        } else {
+            selector.appendChild(option);
+        }
+    }
+    
+    selector.appendChild(groups['iphone']);
+    selector.appendChild(groups['android']);
+}
+
+/**
  * 디바이스 미리보기 변경
  */
 function changeDevicePreview() {
@@ -11,7 +48,6 @@ function changeDevicePreview() {
     if (!selector) return;
     
     const deviceKey = selector.value;
-    // DEVICE_PRESETS must be available from config.js
     const device = DEVICE_PRESETS[deviceKey];
     if (!device) return;
     
@@ -24,8 +60,6 @@ function changeDevicePreview() {
     // Update Frame Size
     const frame = document.getElementById('phoneFrame');
     if (frame) {
-        // Base width for preview is 280px (Standard size fitting the panel)
-        // We calculate height based on the device aspect ratio
         const baseWidth = 280;
         const ratio = device.height / device.width;
         const newHeight = Math.round(baseWidth * ratio);
@@ -33,7 +67,6 @@ function changeDevicePreview() {
         frame.style.width = `${baseWidth}px`;
         frame.style.height = `${newHeight}px`;
         
-        // Add specific class for potential CSS adjustments (e.g. notch styling)
         frame.className = `phone-frame bg-white relative transition-all duration-300 ease-in-out ${deviceKey}`;
     }
 }
@@ -107,17 +140,14 @@ function updateMainPreview() {
  * 현재 Step에 맞는 미리보기 화면 전환
  */
 function switchPreviewForStep(step) {
-    // 미리보기 컨테이너들
     const mainPreview = document.getElementById('mainScreenPreview');
     const chatPreview = document.getElementById('chatRoomPreview');
     const otherPreview = document.getElementById('otherSettingsPreview');
     
-    // 모두 숨기기
     [mainPreview, chatPreview, otherPreview].forEach(el => {
         if (el) el.style.display = 'none';
     });
     
-    // 현재 Step에 맞는 미리보기 표시
     switch(step) {
         case 2:
             if (mainPreview) mainPreview.style.display = 'block';
@@ -129,7 +159,6 @@ function switchPreviewForStep(step) {
             if (otherPreview) otherPreview.style.display = 'block';
             break;
         default:
-            // Step 1은 기본 미리보기 (채팅방)
             if (chatPreview) chatPreview.style.display = 'flex';
             break;
     }

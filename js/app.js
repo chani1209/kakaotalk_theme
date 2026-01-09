@@ -10,7 +10,12 @@ function initApp() {
     lucide.createIcons();
     updatePreview();
     
-    // 초기 디바이스 설정 적용 (preview.js)
+    // 디바이스별 화면 목록 생성 (preview.js)
+    if (typeof populateDeviceSelector === 'function') {
+        populateDeviceSelector();
+    }
+    
+    // 초기 디바이스 설정 적용
     if (typeof changeDevicePreview === 'function') {
         changeDevicePreview();
     }
