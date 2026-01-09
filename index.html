@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KakaoTalk Theme Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://scaleflex.cloudimg.io/v7/plugins/filerobot-image-editor/latest/filerobot-image-editor.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Theme Preview Variables */
+            --chat-bg: #FFDEDE;
+            --bubble-send-bg: #FF7F7F;
+            --bubble-send-text: #FFFFFF;
+            --bubble-receive-bg: #FFFFFF;
+            --bubble-receive-text: #4D4D4D;
+            --input-bg: #FFFFFF;
+            --header-text: #664242;
+        }
+        
+        /* Premium UI Utility Classes */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        .step-active { 
+            background-color: #4F46E5; /* Indigo-600 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+        
+        .step-item {
+            transition: all 0.2s ease;
+        }
+        
+        .phone-frame {
+            width: 280px; height: 560px;
+            border-radius: 44px; 
+            border: 8px solid #1e293b; /* Keep dark frame for contrast */
+            overflow: hidden; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            background: white;
+        }
+        
+        .bubble-send {
+            background: var(--bubble-send-bg); color: var(--bubble-send-text);
+            border-radius: 18px 18px 4px 18px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .bubble-receive {
+            background: var(--bubble-receive-bg); color: var(--bubble-receive-text);
+            border-radius: 18px 18px 18px 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        /* Custom UI Components */
+        input[type="color"] {
+            -webkit-appearance: none; appearance: none;
+            width: 48px; height: 48px;
+            border: 1px solid #E2E8F0; /* Slate-200 */
+            border-radius: 12px; 
+            cursor: pointer;
+            padding: 4px;
+            background: white;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { 
+            border: none; 
+            border-radius: 8px; 
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        
+        .tooltip { position: relative; }
+        .tooltip:hover .tooltip-text { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-4px); }
+        .tooltip-text {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: #fff; padding: 6px 10px; border-radius: 6px;
+            font-size: 12px; white-space: nowrap; opacity: 0; visibility: hidden;
+            transition: all 0.2s; z-index: 50; margin-bottom: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .tooltip-text::after {
+            content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+            border: 5px solid transparent; border-top-color: #1e293b;
+        }
+        .crop-area { border: 2px dashed #6366f1; position: absolute; cursor: move; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased">
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-100">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">🎨</span>
+                    테마 제작 가이드
+                </h2>
+                <button onclick="closeHelpModal()" class="text-slate-400 hover:text-slate-600 transition-colors bg-slate-50 w-8 h-8 rounded-full flex items-center justify-center">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[60vh] space-y-6">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center font-bold shrink-0">1</div>
+                    <div>
+                        <h3 class="font-semibold text-lg">프로젝트 설정</h3>
+                        <p class="text-slate-400 text-sm">테마 이름, ID, 제작자 등 기본 정보를 입력합니다. 시스템 모드(라이트/다크)를 선택하세요.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center font-bold shrink-0">2</div>
+                    <div>
+                        <h3 class="font-semibold text-lg">메인 화면 스타일</h3>
+                        <p class="text-slate-400 text-sm">친구/채팅 목록 화면의 헤더, 배경색, 텍스트 색상을 설정합니다.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center font-bold shrink-0">3</div>
+                    <div>
+                        <h3 class="font-semibold text-lg">채팅방 스타일</h3>
+                        <p class="text-slate-400 text-sm">채팅방 배경, 입력창, 말풍선 이미지와 색상을 설정합니다.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center font-bold shrink-0">4</div>
+                    <div>
+                        <h3 class="font-semibold text-lg">기타 설정</h3>
+                        <p class="text-slate-400 text-sm">잠금화면, 알림 배너 등의 색상을 설정합니다.</p>
+                    </div>
+                </div>
+                <hr class="border-slate-700">
+                <div class="bg-slate-700/50 rounded-xl p-4">
+                    <h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> 저장</h4>
+                    <p class="text-slate-400 text-sm">현재 작업을 ZIP 파일로 저장합니다. 나중에 다시 불러와 수정할 수 있습니다.</p>
+                </div>
+                <div class="bg-indigo-500/20 rounded-xl p-4 border border-indigo-500/30">
+                    <h4 class="font-semibold mb-2 flex items-center gap-2 text-indigo-300"><i data-lucide="package" class="w-4 h-4"></i> 빌드</h4>
+                    <p class="text-slate-400 text-sm">완성된 테마를 <strong class="text-white">.ktheme</strong> 파일로 내보냅니다. 이 파일을 iOS 카카오톡에 적용할 수 있습니다.</p>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-700">
+                <button onclick="closeHelpModal()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold">시작하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filerobot Image Editor Container -->
+    <div id="editor_backdrop" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);">
+        <!-- Size Info Banner -->
+        <div id="editor_size_banner" style="position:absolute; top:2%; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #6366f1, #8b5cf6); padding:12px 24px; border-radius:12px; z-index:101; display:flex; align-items:center; gap:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.3);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+            <div style="color:white;">
+                <div style="font-weight:600; font-size:14px;" id="editor_size_title">이미지 크기</div>
+                <div style="font-size:12px; opacity:0.9;" id="editor_size_desc">저장시 자동으로 아래 크기로 조정됩니다</div>
+            </div>
+            <div style="background:white; color:#6366f1; padding:6px 16px; border-radius:8px; font-weight:700; font-size:16px;" id="editor_size_value">162×162</div>
+        </div>
+        <div id="editor_container" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:1200px; height:80%; border-radius:16px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-40 shadow-sm transition-all duration-300">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center shadow-sm">
+                <span class="text-[#3c1e1e] font-bold text-lg">K</span>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-slate-900 tracking-tight">KakaoTalk Theme Creator</h1>
+                <p class="text-xs text-slate-500 font-medium">for iOS v25.11.0</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openHelpModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                <i data-lucide="help-circle" class="w-4 h-4"></i> 도움말
+            </button>
+            <button onclick="loadSampleTheme()" class="px-4 py-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+                <i data-lucide="wand" class="w-4 h-4"></i> 샘플 로드
+            </button>
+            <button onclick="saveProject()" class="px-4 py-2 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-sm">
+                <i data-lucide="save" class="w-4 h-4"></i> 프로젝트 저장
+            </button>
+            <button onclick="loadProject()" class="px-4 py-2 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-sm">
+                <i data-lucide="folder-open" class="w-4 h-4"></i> 불러오기
+            </button>
+            <button onclick="buildTheme()" class="tooltip px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                <i data-lucide="package" class="w-4 h-4"></i> 빌드
+                <span class="tooltip-text">.ktheme 파일 생성</span>
+            </button>
+        </div>
+        <input type="file" id="fileInput" accept=".zip" class="hidden" onchange="handleFileLoad(event)">
+    </header>
+
+    <div class="flex h-[calc(100vh-73px)] overflow-hidden bg-slate-50">
+        <!-- Sidebar Navigation -->
+        <nav class="w-72 bg-white border-r border-slate-200 p-6 flex flex-col gap-2 overflow-y-auto">
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Steps</div>
+            
+            <button onclick="goToStep(1)" class="step-btn step-active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm group">
+                <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-bold text-sm">1</div>
+                <div>
+                    <div class="font-semibold text-sm">기본 정보</div>
+                    <div class="text-[11px] opacity-80 mt-0.5">테마 이름 및 버전</div>
+                </div>
+            </button>
+
+            <button onclick="goToStep(2)" class="step-btn bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-200 w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all group">
+                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm border border-transparent group-hover:border-slate-200 flex items-center justify-center font-bold text-sm transition-all">2</div>
+                <div>
+                    <div class="font-semibold text-sm">메인 화면</div>
+                    <div class="text-[11px] text-slate-400 group-hover:text-slate-500 mt-0.5">탭바, 친구 목록</div>
+                </div>
+            </button>
+
+            <button onclick="goToStep(3)" class="step-btn bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-200 w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all group">
+                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm border border-transparent group-hover:border-slate-200 flex items-center justify-center font-bold text-sm transition-all">3</div>
+                <div>
+                    <div class="font-semibold text-sm">채팅방 화면</div>
+                    <div class="text-[11px] text-slate-400 group-hover:text-slate-500 mt-0.5">대화창, 말풍선</div>
+                </div>
+            </button>
+
+            <button onclick="goToStep(4)" class="step-btn bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-200 w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all group">
+                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm border border-transparent group-hover:border-slate-200 flex items-center justify-center font-bold text-sm transition-all">4</div>
+                <div>
+                    <div class="font-semibold text-sm">기타 설정</div>
+                    <div class="text-[11px] text-slate-400 group-hover:text-slate-500 mt-0.5">잠금화면, 알림</div>
+                </div>
+            </button>
+            
+            <div class="mt-auto pt-6 border-t border-slate-100">
+                <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+                    <h4 class="text-indigo-900 font-semibold text-sm mb-1 flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-indigo-600"></i> Pro Tip
+                    </h4>
+                    <p class="text-xs text-indigo-700 leading-relaxed">
+                        이미지 업로드 시 자르기 도구를 사용하여 정확한 비율로 최적화할 수 있습니다.
+                    </p>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto p-6" id="mainContent">
+            <!-- Step 1 -->
+            <div id="step1" class="step-content">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 tracking-tight">프로젝트 설정</h2>
+                        <p class="text-slate-500 text-sm mt-1">테마의 기본 정보를 입력하고 시스템 모드를 선택하세요.</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6 max-w-5xl">
+                    <!-- Project Info Card -->
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <div class="flex items-center gap-2 border-b border-slate-100 pb-4 mb-6">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                <i data-lucide="info" class="w-4 h-4"></i>
+                            </div>
+                            <h3 class="font-semibold text-lg text-slate-900">테마 정보</h3>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1.5">테마 이름</label>
+                                <input type="text" id="themeName" value="My Theme" onchange="updateData()" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1.5">테마 ID</label>
+                                <input type="text" id="themeId" value="com.kakao.talk.theme.custom" onchange="updateData()" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-600 mb-1.5">버전</label>
+                                    <input type="text" id="themeVersion" value="25.11.0" onchange="updateData()" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-600 mb-1.5">제작자</label>
+                                    <input type="text" id="themeAuthor" value="Author" onchange="updateData()" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Mode & Icon Card -->
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col h-full">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                    <i data-lucide="settings" class="w-4 h-4"></i>
+                                </div>
+                                <h3 class="font-semibold text-lg text-slate-900">설정</h3>
+                            </div>
+                            <div class="tooltip z-20">
+                                <i data-lucide="help-circle" class="w-5 h-5 text-slate-400 hover:text-indigo-600 cursor-help transition-colors"></i>
+                                <span class="tooltip-text w-64 whitespace-normal shadow-xl">iOS 시스템 설정(다크모드 여부)에 따라 테마 스타일을 지정합니다.</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 mb-8">
+                            <label class="flex-1 cursor-pointer group">
+                                <input type="radio" name="themeStyle" value="light" checked onchange="updateData()" class="hidden peer">
+                                <div class="p-5 rounded-xl border-2 border-slate-100 bg-slate-50 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/50 peer-checked:text-indigo-700 text-slate-500 text-center transition-all group-hover:border-slate-200 h-full flex flex-col justify-center items-center gap-3">
+                                    <i data-lucide="sun" class="w-8 h-8"></i>
+                                    <span class="font-medium">Light Mode</span>
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer group">
+                                <input type="radio" name="themeStyle" value="dark" onchange="updateData()" class="hidden peer">
+                                <div class="p-5 rounded-xl border-2 border-slate-100 bg-slate-50 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/50 peer-checked:text-indigo-700 text-slate-500 text-center transition-all group-hover:border-slate-200 h-full flex flex-col justify-center items-center gap-3">
+                                    <i data-lucide="moon" class="w-8 h-8"></i>
+                                    <span class="font-medium">Dark Mode</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="mt-auto">
+                            <label class="block text-sm font-medium text-slate-600 mb-3">테마 아이콘 (162x162)</label>
+                            <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <div id="themeIconPreview" class="w-16 h-16 bg-white border border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm">
+                                    <i data-lucide="image" class="w-6 h-6 text-slate-300"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h5 class="text-sm font-semibold text-slate-900 mb-1">아이콘 업로드</h5>
+                                    <p class="text-xs text-slate-500 mb-3">앱스토어 및 설정 화면에 표시됩니다.</p>
+                                    <label class="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg cursor-pointer text-sm font-medium transition-all shadow-sm hover:shadow">
+                                        <i data-lucide="upload-cloud" class="w-4 h-4 text-indigo-500"></i> 이미지 선택
+                                        <input type="file" accept="image/*" class="hidden" onchange="handleImageUploadWithEditor(event, 'commonIcoTheme', 162, 162)">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Main Screen -->
+            <div id="step2" class="step-content hidden">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6 tracking-tight">메인 화면 스타일</h2>
+                <div class="space-y-6 max-w-5xl">
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <h3 class="font-semibold text-lg text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+                            <i data-lucide="layout" class="w-5 h-5 text-indigo-500"></i> 헤더 스타일
+                        </h3>
+                        <div class="grid grid-cols-4 gap-6">
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="headerTextColor" value="#664242" onchange="updatePreview()">
+                                <div>
+                                    <div class="text-sm font-medium text-slate-900">타이틀 색상</div>
+                                    <div class="text-xs text-slate-400 font-mono">-ios-text-color</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="tabTextColor" value="#B39898" onchange="updatePreview()">
+                                <div>
+                                    <div class="text-sm font-medium text-slate-900">탭 기본 텍스트</div>
+                                    <div class="text-xs text-slate-400 font-mono">-ios-tab-text-color</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="tabHighlightColor" value="#664242" onchange="updatePreview()">
+                                <div>
+                                    <div class="text-sm font-medium text-slate-900">탭 선택 텍스트</div>
+                                    <div class="text-xs text-slate-400 font-mono">-ios-tab-highlighted</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <h3 class="font-semibold text-lg text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+                            <i data-lucide="image" class="w-5 h-5 text-indigo-500"></i> 메인 뷰 스타일
+                        </h3>
+                        <div class="grid grid-cols-4 gap-6 mb-6">
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="mainBgColor" value="#FFDEDE" onchange="updatePreview()">
+                                <div>
+                                    <div class="text-sm font-medium text-slate-900">배경색</div>
+                                    <div class="text-xs text-slate-400 font-mono">background-color</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="mainTextColor" value="#664242" onchange="updatePreview()">
+                                <div>
+                                    <div class="text-sm font-medium text-slate-900">기본 텍스트</div>
+                                    <div class="text-xs text-slate-400 font-mono">-ios-text-color</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="descTextColor" value="#805959" onchange="updatePreview()">
+                                <div>
+                                    <div class="text-sm font-medium text-slate-900">상태메시지</div>
+                                    <div class="text-xs text-slate-400 font-mono">-ios-description</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                            <div class="text-sm font-medium text-slate-700">배경 이미지 (mainBgImage.png)</div>
+                            <label class="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 text-slate-700 rounded-lg cursor-pointer text-sm font-medium transition-all shadow-sm">
+                                <i data-lucide="upload" class="w-4 h-4"></i> 업로드
+                                <input type="file" accept="image/*" class="hidden" onchange="handleImageUploadWithEditor(event, 'mainBgImage')">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Chat Room -->
+            <div id="step3" class="step-content hidden">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6 tracking-tight">채팅방 스타일</h2>
+                <div class="space-y-6 max-w-5xl">
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <h3 class="font-semibold text-lg text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+                             <i data-lucide="message-square" class="w-5 h-5 text-indigo-500"></i> 채팅방 배경
+                        </h3>
+                        <div class="flex items-center gap-8">
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="chatBgColor" value="#FFDEDE" onchange="updatePreview()">
+                                <div><div class="text-sm font-medium text-slate-900">배경색</div></div>
+                            </div>
+                            <div class="h-8 border-r border-slate-200"></div>
+                            <div class="flex-1 flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-sm text-slate-600 font-medium">배경 이미지 (chatroomBgImage.png)</span>
+                                <label class="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200 hover:border-indigo-200 rounded-lg cursor-pointer text-sm font-medium transition-all shadow-sm">
+                                    <i data-lucide="image" class="w-4 h-4"></i> 업로드
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleImageUploadWithEditor(event, 'chatroomBgImage')">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <h3 class="font-semibold text-lg text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+                            <i data-lucide="text-cursor-input" class="w-5 h-5 text-indigo-500"></i> 입력창 스타일
+                        </h3>
+                        <div class="grid grid-cols-4 gap-6">
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="inputBgColor" value="#FFFFFF" onchange="updatePreview()">
+                                <div><div class="text-sm font-medium text-slate-900">배경색</div></div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="sendBtnBgColor" value="#FF7F7F" onchange="updatePreview()">
+                                <div><div class="text-sm font-medium text-slate-900">전송버튼 배경</div></div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="sendBtnFgColor" value="#FFFFFF" onchange="updatePreview()">
+                                <div><div class="text-sm font-medium text-slate-900">전송버튼 아이콘</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Sent Message -->
+                        <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                            <h3 class="font-semibold text-lg text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i data-lucide="send" class="w-4 h-4 text-indigo-500"></i> 보낸 메시지</span>
+                            </h3>
+                            <div class="space-y-5">
+                                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <input type="color" id="bubbleSendTextColor" value="#FFFFFF" onchange="updatePreview()">
+                                    <div class="text-sm font-medium text-slate-900">텍스트 색상</div>
+                                </div>
+                                
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Insets</label>
+                                    <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        <div><label class="text-[10px] text-slate-500 mb-1 block">Top</label><input type="number" id="sendInsetTop" value="10" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none" onchange="updatePreview()"></div>
+                                        <div><label class="text-[10px] text-slate-500 mb-1 block">Left</label><input type="number" id="sendInsetLeft" value="10" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none" onchange="updatePreview()"></div>
+                                        <div><label class="text-[10px] text-slate-500 mb-1 block">Bottom</label><input type="number" id="sendInsetBottom" value="7" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none" onchange="updatePreview()"></div>
+                                        <div><label class="text-[10px] text-slate-500 mb-1 block">Right</label><input type="number" id="sendInsetRight" value="12" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none" onchange="updatePreview()"></div>
+                                    </div>
+                                </div>
+                                
+                                <label class="flex items-center justify-center w-full px-4 py-3 bg-white hover:bg-slate-50 border border-dashed border-slate-300 hover:border-indigo-300 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-all gap-2 group">
+                                    <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 flex items-center justify-center transition-colors">
+                                        <i data-lucide="upload" class="w-4 h-4"></i>
+                                    </div>
+                                    말풍선 이미지 업로드
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleImageUploadWithEditor(event, 'chatroomBubbleSend01')">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Received Message -->
+                        <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                            <h3 class="font-semibold text-lg text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4 text-slate-500"></i> 받은 메시지</span>
+                            </h3>
+                            <div class="space-y-5">
+                                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <input type="color" id="bubbleReceiveTextColor" value="#4D4D4D" onchange="updatePreview()">
+                                    <div class="text-sm font-medium text-slate-900">텍스트 색상</div>
+                                </div>
+                                
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Insets</label>
+                                    <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        <div><label class="text-[10px] text-slate-500 mb-1 block">Top</label><input type="number" id="recvInsetTop" value="10" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none" onchange="updatePreview()"></div>
+                                        <div><label class="text-[10px] text-slate-500 mb-1 block">Left</label><input type="number" id="recvInsetLeft" value="16" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none" onchange="updatePreview()"></div>
+                                        <div><label class="text-[10px] text-slate-500 mb-1 block">Bottom</label><input type="number" id="recvInsetBottom" value="7" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none" onchange="updatePreview()"></div>
+                                        <div><label class="text-[10px] text-slate-500 mb-1 block">Right</label><input type="number" id="recvInsetRight" value="10" class="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none" onchange="updatePreview()"></div>
+                                    </div>
+                                </div>
+                                
+                                <label class="flex items-center justify-center w-full px-4 py-3 bg-white hover:bg-slate-50 border border-dashed border-slate-300 hover:border-indigo-300 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-all gap-2 group">
+                                    <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 flex items-center justify-center transition-colors">
+                                        <i data-lucide="upload" class="w-4 h-4"></i>
+                                    </div>
+                                    말풍선 이미지 업로드
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleImageUploadWithEditor(event, 'chatroomBubbleReceive01')">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Others -->
+            <div id="step4" class="step-content hidden">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6 tracking-tight">기타 설정</h2>
+                <div class="space-y-6 max-w-5xl">
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <h3 class="font-semibold text-lg text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+                            <i data-lucide="lock" class="w-5 h-5 text-indigo-500"></i> 잠금화면
+                        </h3>
+                        <div class="grid grid-cols-4 gap-6">
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="passcodeBgColor" value="#FFDEDE" onchange="updatePreview()">
+                                <div class="text-sm font-medium">배경색</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="passcodeTitleColor" value="#664242" onchange="updatePreview()">
+                                <div class="text-sm font-medium">타이틀 색상</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="keypadBgColor" value="#FFF2F2" onchange="updatePreview()">
+                                <div class="text-sm font-medium">키패드 배경</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <h3 class="font-semibold text-lg text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+                             <i data-lucide="bell" class="w-5 h-5 text-indigo-500"></i> 알림 배너
+                        </h3>
+                        <div class="grid grid-cols-4 gap-6">
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="notifBgColor" value="#FCC5C5" onchange="updatePreview()">
+                                <div class="text-sm font-medium">배경색</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="notifNameColor" value="#604242" onchange="updatePreview()">
+                                <div class="text-sm font-medium">이름 색상</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                <input type="color" id="notifMsgColor" value="#805959" onchange="updatePreview()">
+                                <div class="text-sm font-medium">메시지 색상</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Preview Panel -->
+        <aside class="w-96 bg-white border-l border-slate-200 p-6 flex flex-col items-center overflow-y-auto shadow-sm z-30">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 self-start">Live Preview</h3>
+            
+            <!-- Device Selector -->
+            <div class="w-full mb-2">
+                <div class="relative">
+                    <select id="deviceSelector" onchange="changeDevicePreview()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all cursor-pointer font-medium hover:bg-slate-100">
+                        <optgroup label="iPhone">
+                            <option value="iphone-se">iPhone SE (375×667)</option>
+                            <option value="iphone-8">iPhone 8 (375×667)</option>
+                            <option value="iphone-12-mini">iPhone 12/13 mini (375×812)</option>
+                            <option value="iphone-12">iPhone 12/13/14 (390×844)</option>
+                            <option value="iphone-14-pro" selected>iPhone 14 Pro (393×852)</option>
+                            <option value="iphone-14-pro-max">iPhone 14 Pro Max (430×932)</option>
+                            <option value="iphone-15">iPhone 15 (393×852)</option>
+                            <option value="iphone-15-pro-max">iPhone 15 Pro Max (430×932)</option>
+                        </optgroup>
+                        <optgroup label="Android">
+                            <option value="galaxy-s23">Galaxy S23 (360×780)</option>
+                            <option value="galaxy-s24">Galaxy S24 (360×780)</option>
+                            <option value="galaxy-s24-ultra">Galaxy S24 Ultra (384×824)</option>
+                            <option value="pixel-7">Pixel 7 (412×892)</option>
+                            <option value="pixel-8-pro">Pixel 8 Pro (412×892)</option>
+                        </optgroup>
+                    </select>
+                    <i data-lucide="smartphone" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                </div>
+            </div>
+            
+            <!-- Device Info -->
+            <div id="deviceInfo" class="text-xs text-slate-400 mb-6 font-medium">iPhone 14 Pro • 393×852 • @3x</div>
+            
+            <div id="phoneFrame" class="phone-frame bg-white relative transition-all duration-300 ease-in-out" style="width:280px; height:607px;">
+                <!-- Status Bar Mockup -->
+                <div class="absolute top-0 w-full h-8 z-20 flex justify-between items-center px-6 text-[10px] font-bold text-slate-900 pointer-events-none mix-blend-difference" style="color:inherit">
+                    <span>9:41</span>
+                    <div class="flex gap-1">
+                        <i data-lucide="signal" class="w-3 h-3"></i>
+                        <i data-lucide="wifi" class="w-3 h-3"></i>
+                        <i data-lucide="battery-full" class="w-3 h-3"></i>
+                    </div>
+                </div>
+                
+                <div id="previewContent" style="height:100%; display:flex; flex-direction:column;">
+                    <div id="prevHeader" class="px-4 py-3 pt-10 flex items-center justify-between transition-colors duration-200" style="background: var(--chat-bg);">
+                        <div class="flex items-center gap-2">
+                            <span style="color: var(--header-text);" class="text-2xl font-light">‹</span>
+                            <span style="color: var(--header-text); font-weight: 600;">어피치</span>
+                        </div>
+                        <div class="flex gap-3" style="color: var(--header-text);">
+                            <i data-lucide="search" class="w-5 h-5"></i>
+                            <i data-lucide="menu" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div id="prevChatArea" class="flex-1 p-3 space-y-3 overflow-y-auto" style="background: var(--chat-bg);">
+                        <div class="text-xs text-center opacity-40 my-4" style="color: var(--header-text);">2023년 10월 25일 수요일</div>
+                        <div class="flex gap-2 group">
+                            <div class="w-10 h-10 rounded-[14px] bg-pink-200 overflow-hidden shrink-0 border border-black/5">
+                                <img src="https://api.dicebear.com/7.x/fun-emoji/svg?seed=Apeach" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <div class="text-xs mb-1 opacity-70 ml-1" style="color: var(--header-text);">어피치</div>
+                                <div class="bubble-receive px-3.5 py-2.5 text-sm max-w-[180px] shadow-sm relative group-hover:brightness-95 transition-all">
+                                    안녕하세요! 🍑<br>기분 좋은 하루 보내세요!
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end group">
+                            <div class="flex items-end gap-1">
+                                <span class="text-[10px] opacity-40 mb-1" style="color: var(--header-text);">오전 9:42</span>
+                                <div class="bubble-send px-3.5 py-2.5 text-sm max-w-[180px] shadow-sm group-hover:brightness-95 transition-all">
+                                    반가워요!<br>테마 만드는 중이에요 😊
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 group">
+                            <div class="w-10 h-10 rounded-[14px] bg-pink-200 overflow-hidden shrink-0 border border-black/5">
+                                <img src="https://api.dicebear.com/7.x/fun-emoji/svg?seed=Apeach" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <div class="bubble-receive px-3.5 py-2.5 text-sm max-w-[180px] shadow-sm relative group-hover:brightness-95 transition-all">
+                                    와, 기대되네요! ✨<br>완성되면 꼭 보여주세요!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="prevInputBar" class="p-2.5 flex items-center gap-2 border-t border-black/5" style="background: var(--input-bg);">
+                        <div class="w-9 h-9 rounded-full hover:bg-black/5 cursor-pointer flex items-center justify-center transition-colors text-slate-400">
+                            <i data-lucide="plus" class="w-6 h-6"></i>
+                        </div>
+                        <div class="flex-1 bg-black/5 rounded-full px-4 py-2 text-sm text-slate-400 flex justify-between items-center cursor-text">
+                            <span>메시지 입력</span>
+                            <i data-lucide="smile" class="w-4 h-4 opacity-50"></i>
+                        </div>
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-95 shadow-sm" style="background: var(--bubble-send-bg);">
+                            <i data-lucide="arrow-up" class="w-5 h-5" style="color: var(--bubble-send-text);"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modular Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/css-generator.js"></script>
+    <script src="js/editor.js"></script>
+    <script src="js/preview.js"></script>
+    <script src="js/build.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
