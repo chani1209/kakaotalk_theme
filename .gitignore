@@ -1,0 +1,19 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Build Artifacts
+*.zip
+*.ktheme
+
+# Intermediate/Generated Files
+pdf_content.txt
+pdf_images/
+extract_pdf.py
+*.pdf
+
+# Reference/Sample Files (Clean repo)
+apeach-25.8.0/
+
+# Logs
+*.log

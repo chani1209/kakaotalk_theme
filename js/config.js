@@ -232,6 +232,13 @@ const APEACH_SAMPLE = {
         url: 'http://www.kakao.com',
         style: 'light'
     },
+    images: {
+        'commonIcoTheme': 'sample_theme/Images/commonIcoTheme.png',
+        'maintabBgImage': 'sample_theme/Images/maintabBgImage@3x.png',
+        'mainBgImage': 'sample_theme/Images/mainBgImage@3x.png',
+        'chatroomBgImage': 'sample_theme/Images/chatroomBgImage@3x.png',
+        'passcodeBgImage': 'sample_theme/Images/passcodeBgImage@3x.png'
+    },
     colors: {
         headerTextColor: '#664242',
         tabTextColor: '#B39898',

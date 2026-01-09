@@ -73,14 +73,44 @@ function restoreFormData(formData) {
 /**
  * 샘플 테마 로드
  */
-function loadSampleTheme() {
+async function loadSampleTheme() {
     document.getElementById('themeName').value = APEACH_SAMPLE.manifest.name;
     document.getElementById('themeId').value = APEACH_SAMPLE.manifest.id;
     document.getElementById('themeAuthor').value = APEACH_SAMPLE.manifest.author;
     
+    // 색상 적용
     for (const [id, value] of Object.entries(APEACH_SAMPLE.colors)) {
         const el = document.getElementById(id);
         if (el) el.value = value;
+    }
+    
+    // 이미지 로드 (비동기)
+    if (APEACH_SAMPLE.images) {
+        for (const [key, path] of Object.entries(APEACH_SAMPLE.images)) {
+            try {
+                const response = await fetch(path);
+                const blob = await response.blob();
+                
+                await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const dataUrl = reader.result;
+                        // projectData.images 키는 .png 포함
+                        projectData.images[key + '.png'] = dataUrl;
+                        
+                        // 미리보기 업데이트 (editor.js의 updateImagePreview 사용)
+                        if (typeof updateImagePreview === 'function') {
+                            updateImagePreview(key, dataUrl);
+                        }
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (e) {
+                console.error('Failed to load sample image:', path, e);
+            }
+        }
     }
     
     updateProjectData();
